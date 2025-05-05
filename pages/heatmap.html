@@ -1,38 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokémon Data Visualizations</title>
-    <script src="https://cdn.jsdeliver.net/npm/d3@7"></script>
-    <link rel="stylesheet" href="../stylesheets/index_stylesheet.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pokémon Data Visualizations</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link rel="stylesheet" href="../stylesheets/heatmap_stylesheet.css" />
 </head>
 <body>
-    <!-- Hard-code navigation, header, and footer (bottom) onto every page -->
-    <header>
-        <div class="header-flex">
-            <img class="pokeball" src="../images/pokeball.png" alt="pokeball">
-            <h1>Pokémon Data Visualizations</h1>
+  <header>
+    <div class="header-flex">
+      <img class="pokeball" src="../images/pokeball.png" alt="pokeball" />
+      <h1>Pokémon Data Visualizations</h1>
+    </div>
+  </header>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="bar_graphA.html">Bar Graph A</a>
+    <a href="bar_graphB.html">Bar Graph B</a>
+    <a href="heatmap.html" class="active">Heatmap</a>
+    <a href="scatterplot.html">Scatterplot</a>
+    <a href="about.html">About</a>
+  </nav>
+
+  <main>
+    <section class="Heading"></section>
+    <div class="graph-wrapper">
+       <!-- graphs  -->
+        <div class="chart-container">
+          <svg id="pokemonUsage2022" width="800" height="500"></svg>
+          <svg id="pokemonUsage2023" width="800" height="500"></svg>
+          <svg id="pokemonUsage2024" width="800" height="500"></svg>
         </div>
-    </header>
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="bar_graphA.html">Bar Graph A</a>
-        <a href="bar_graphB.html">Bar Graph B</a>
-        <a href="heatmap.html" class="active">Heatmap</a>
-        <a href="scatterplot.html">Scatterplot</a>
-        <a href="about.html">About</a>
-    </nav>
-    <!-- Main page code in here -->
-    <main>
-        <section class= "Heading">
-            <p> Hi, main body of information here! </p>
-        </section>
-    </main>
-    <footer>
-        <p>Visualizations and website powered by <strong>d3.stroyers</strong> for our client <strong>Axis Addicts</strong>.<br>
-            All Pokémon related content are &copy; Nintendo, Game Freak, and the Pokémon Company.
-        </p>
-    </footer>
+      
+        <!-- Legend -->
+        <div class="legend-container">
+          <div class="legend-title">Usage Legend</div>
+          <div class="legend-box">
+            <div class="legend-color" style="background-color:green; opacity: 0.2;"></div>
+            <span>Low usage</span>
+          </div>
+          <div class="legend-box">
+            <div class="legend-color" style="background-color: green; opacity: 0.5;"></div>
+            <span>Medium usage</span>
+          </div>
+          <div class="legend-box">
+            <div class="legend-color" style="background-color: green; opacity: 1;"></div>
+            <span>High usage</span>
+          </div>
+        </div>
+      </div>
+    
+
+    
+<!-- tooltip -->
+    <div id="tooltip"></div>
+
+    <script>
+      const years = ['2022', '2023', '2024'];
+
+      d3.csv("../data/pokemon_analysis_data.csv").then(function(data) {
+        // Go though data
+        years.forEach(year => {
+          data.forEach(d => d[`Smogon_VGC_Usage_${year}`] = +d[`Smogon_VGC_Usage_${year}`]);
+        });
+
+        // Filter out No_type from type2
+        data = data.filter(d => d.type2 !== 'No_type');
+
+        const margin = { top: 50, right: 30, bottom: 30, left: 60 },
+              width = 700,
+              height = 400;
+
+        const groups = [...new Set(data.map(d => d.type1))];
+        const variables = [...new Set(data.map(d => d.type2))];
+
+        const x = d3.scaleBand()
+          .domain(variables)
+          .range([0, width])
+          .padding(0.05);
+
+        const y = d3.scaleBand()
+          .domain(groups)
+          .range([0, height])
+          .padding(0.05);
+
+        const maxUsage = d3.max(data, d => d3.max(years.map(y => d[`Smogon_VGC_Usage_${y}`])));
+
+    
+        years.forEach(year => {
+          const usageKey = `Smogon_VGC_Usage_${year}`;
+          const svg = d3.select(`#pokemonUsage${year}`)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+          // Title
+          d3.select(`#pokemonUsage${year}`)
+            .append("text")
+            .attr("x", margin.left + width / 2)
+            .attr("y", 30)
+            .attr("text-anchor", "middle")
+            .style("font-size", "18px")
+            .text(`Smogon VGC Usage ${year}`);
+
+          // Axes
+          svg.append("g")
+            .call(d3.axisTop(x).tickSize(0))
+            .attr("transform", "translate(0,0)");
+
+          svg.append("g")
+            .call(d3.axisLeft(y).tickSize(0))
+            .attr("transform", "translate(0,0)");
+
+          const tooltip = d3.select("#tooltip");
+
+          svg.selectAll()
+            .data(data, d => d.type1 + ':' + d.type2)
+            .join("rect")
+            .attr("x", d => x(d.type2))
+            .attr("y", d => y(d.type1))
+            .attr("width", x.bandwidth())
+            .attr("height", y.bandwidth())
+            .attr("fill", "green")
+            .style("fill-opacity", d => d[usageKey]/maxUsage)
+            .on("mouseover", (event, d) => {
+              d3.select(event.currentTarget)
+                .attr("stroke", "black")
+                .attr("stroke-width", 2);
+
+              tooltip
+                .style("display", "block")
+                .html( `
+                   Type 1: ${d.type1}
+                   Type 2: ${d.type2}`
+                );
+            })
+            .on("mousemove", event => {
+              tooltip
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 40) + "px");
+            })
+            .on("mouseout", event => {
+              d3.select(event.currentTarget)
+                .attr("stroke", null)
+                .attr("stroke-width", null);
+              tooltip.style("display", "none");
+            });
+        });
+      });
+    </script>
+  </main>
+
+  <footer>
+    <p>
+      Visualizations and website powered by <strong>d3.stroyers</strong> for our client <strong>Axis Addicts</strong>.<br>
+      All Pokémon related content are &copy; Nintendo, Game Freak, and the Pokémon Company.
+    </p>
+  </footer>
 </body>
 </html>
