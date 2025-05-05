@@ -26,24 +26,57 @@
     <!-- Main page code in here -->
     <main>
         <section class= "Heading">
-            <p> Hi, main body of information here! </p>
+            <!-- <p> Hi, main body of information here! </p> -->
         </section>
         <div id="tooltip"></div>
-        <div id="scatterplot-container"></div>
+        
+        <div class="dropdown-container">
+            <label for="y-axis-select">Select what attribute to put on Y-Axis: </label>
+            <select id="y-axis-select">
+                <option value="attack">Attack</option>
+                <option value="sp_atk">Sp_atk</option>
+                <option value="defense">Defense</option>
+                <option value="sp_def">Sp_def</option>
+                <option value="speed">Speed</option>
+            </select>
+        </div>
+        
 
-        <select id="y-axis-select">
-            <option value="attack">Attack</option>
-            <option value="sp_atk">Sp_Atk</option>
-            <option value="defense">Defense</option>
-            <option value="sp_def">Sp_Def</option>
-            <option value="speed">Speed</option>
-        </select>
+        <div id="scatterplot-container">
+            <div id="scatterplot-graph"></div>
+            <div class="legend-container">
+                <div class="legend-title">Stat Key</div>
+                <div class="legend">
+                    <div class="legend-box">
+                        <div class="legend-color" style="background-color: #E62829"></div>
+                        <span>Attack</span>
+                    </div>
+                    <div class="legend-box">
+                        <div class="legend-color" style="background-color: #EF70EF"></div>
+                        <span>Sp_atk</span>
+                    </div>
+                    <div class="legend-box">
+                        <div class="legend-color" style="background-color: #2980EF"></div>
+                        <span>Defense</span>
+                    </div>
+                    <div class="legend-box">
+                        <div class="legend-color" style="background-color: #704170"></div>
+                        <span>Sp_def</span>
+                    </div>
+                    <div class="legend-box">
+                        <div class="legend-color" style="background-color: #FAC000"></div>
+                        <span>Speed</span>
+                    </div>
+            </div>
+            </div>
+        </div>
 
+        
         <script>
            d3.csv("../data/pokemon_analysis_data.csv").then(data => {
-    const width = 1000, height = 1000, margin = { top: 50, right: 50, bottom: 50, left: 50 };
+    const width = 700, height = 700, margin = { top: 50, right: 50, bottom: 50, left: 50 };
 
-    const svg = d3.select("#scatterplot-container").append("svg")
+    const svg = d3.select("#scatterplot-graph").append("svg")
         .attr("width", width)
         .attr("height", height);
 
@@ -92,8 +125,16 @@
         .attr("cx", d => xScale(+d.hp))
         .attr("cy", d => yScale(+d.attack))
         .attr("r", 5)
-        .attr("fill", "blue");
+        .attr("fill", "#E62829");
 
+    svg.append("text")
+        .attr("class", "title")
+        .attr("x", width / 2)
+        .attr("y", 10)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "14px")
+        .attr("font-weight", "bold")
+        .text(`Attack vs. HP`);
 
     // This would be the section for the hover action
     const tooltip = d3.select("#tooltip");
@@ -105,9 +146,9 @@
                 <strong>${d.name}</strong><br>
                 HP: ${d.hp}<br>
                 Attack: ${d.attack}<br>
-                Sp_Attack: ${d.sp_atk}<br>
+                Sp_attack: ${d.sp_atk}<br>
                 Defense: ${d.defense}<br>
-                Sp_Defense: ${d.sp_def}<br>
+                Sp_defense: ${d.sp_def}<br>
                 Speed: ${d.speed}
             `);
         d3.select(this).attr("stroke", "black").attr("stroke-width", 2); //Highlight circle
@@ -128,14 +169,24 @@
             .attr("cy", d => yScale(+d[selectedStat]))
             .attr("fill", d => {
             // Change the color based on stat type
-            if (selectedStat === "attack") return "blue";
-            if (selectedStat === "defense") return "green";
-            if (selectedStat === "speed") return "purple";
-            if (selectedStat === "sp_def") return "red";
-            if (selectedStat === "sp_atk") return "orange";
+            if (selectedStat === "attack") return "#E62829";
+            if (selectedStat === "defense") return "#2980EF";
+            if (selectedStat === "speed") return "#FAC000";
+            if (selectedStat === "sp_def") return "#704170";
+            if (selectedStat === "sp_atk") return "#EF70EF";
         });
 
         yAxisLabel.text(selectedStat.charAt(0).toUpperCase() + selectedStat.slice(1));
+
+        svg.selectAll("text.title").remove();
+        svg.append("text")
+            .attr("class", "title")
+            .attr("x", width / 2)
+            .attr("y", 10)
+            .attr("text-anchor", "middle")
+            .attr("font-size", "14px")
+            .attr("font-weight", "bold")
+            .text(`${selectedStat.charAt(0).toUpperCase() + selectedStat.slice(1)} vs. HP`);
     });
 });
         </script>
