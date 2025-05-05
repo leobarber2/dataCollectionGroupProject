@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokémon Data Visualizations</title>
-    <script src="https://cdn.jsdeliver.net/npm/d3@7"></script>
-    <link rel="stylesheet" href="../stylesheets/index_stylesheet.css">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <link rel="stylesheet" href="../stylesheets/about_stylesheet.css">
 </head>
 <body>
     <!-- Hard-code navigation, header, and footer (bottom) onto every page -->
@@ -26,7 +26,88 @@
     <!-- Main page code in here -->
     <main>
         <section class= "Heading">
-            <p> Hi, main body of information for about here! </p>
+            <h3>Find more information about our site below!</h3>
+            <h6>or click the button to see what happens...</h6>
+        </section>
+
+        <section class="PichuEvolve">
+            <img id="evolutionSprite" class="pichu" src="../images/pichu-sprite.gif">
+            <button id="pichuEvoButton" onclick="evolvePichuLine()">Evolve</button>
+            <audio id="evolutionSound" src="../sounds/pokemon-evolve.mp3"></audio>
+            <script>
+                let pichuLineEvoStage = 0;
+
+                function evolvePichuLine() {
+                    const sprite = document.getElementById("evolutionSprite");
+                    const sound = document.getElementById("evolutionSound");
+                    if (pichuLineEvoStage === 0) {
+                        sound.src = "../sounds/pokemon-evolve.mp3";
+                        sound.currentTime = 0;
+                        sound.play();
+                        sprite.src = "../images/sprite-pikachu.gif";
+                        sprite.className = "pikachu";
+                        pichuLineEvoStage = 1;
+                        setTimeout(() => {
+                            alert("😊 Pichu evolved into Pikachu due to a high friendship level! 😊");
+                        }, 500)
+                    } else if (pichuLineEvoStage === 1) {
+                        sound.src = "../sounds/pokemon-evolve.mp3";
+                        sound.currentTime = 0;
+                        sound.play();
+                        sprite.src = "../images/raichu-happy.gif";
+                        sprite.className = "raichu";
+                        pichuLineEvoStage = 2;
+                        setTimeout(() => {
+                            alert("⚡ Pikachu evolved into Raichu using a thunderstone! ⚡");
+                        }, 500)
+                    } else {
+                        sound.src= "../sounds/pokemon-exclamation-mark-sound-effect.mp3";
+                        sound.currentTime = 0;
+                        sound.play();
+                        setTimeout(() => {
+                            alert("😴 Raichu doesn't evolve! 😴");
+                        }, 500)
+                        // window.alert("He only evolves twice..");
+                    }
+                }
+            </script>
+        </section>
+        
+        <section class="LearnMore">
+            <h5>Our visualizations were created using the following tools...</h5>
+            <ul>
+                <li>HTML</li>
+                <li>JavaScript</li>
+                <li>d3.js</li>
+                <li>CSS</li>
+                <li>GitHub</li>
+                <li>GIFS from <a href="https://tenor.com/" target ="_blank">Tenor</a> and <a href= "https://giphy.com/" target="_blank">Giphy</a></li>
+                <li>This <a href="../data/pokemon_analysis_data.csv" download="pokemon_analysis_data.csv">dataset</a> (.csv download)</li>
+                <!-- <br> -->
+            </ul>
+            <h5>Detailed info about each visualization...</h5>
+            <p><strong>Bar Graph A: </strong> These bar graphs compare each Pokémon generation to its average usage in Smogon VGC Tournaments in 2022, 
+                2023, and 2024. We specifically focus on Smogon VGC Usage to match the client's 
+                <a href="https://public.tableau.com/views/CompetitivePokemonAnalysis/Story1?:language=en-US&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link" target="_blank">Tableau visualizations</a>!
+                Note that there is no usage for generation IX because the generation debuted in late 2022.
+            </p>
+            <p>
+                <strong>Bar Graph B: </strong> The second set of bar graphs allow the user to select which graph they would like to see using the interface provided.
+                We included the different selections to let the user see a clear view of the top used Pokémon, rather than a cluttered graph.
+                The user can also hover over each individual bar to see additional information. 
+            </p>
+            <p>
+                <strong>Heatmap: </strong>The heatmap shows the user...
+            </p>
+            <p>
+                <strong>Scatterplot: </strong> The user can modify the graph's y-axis by selecting which attribute they
+                would like to compare with the HP stat. This graph is specifically meant to display the relationship between the HP stat
+                and every other stat. The user may also hover over each dot to see what Pokémon it represents.
+            </p>
+        </section>
+        <section class="End">
+            <h6>Thanks for exploring our visualizations!</h6>
+            <img id="pikachu-flying" src="../images/pikachu-flying.gif" alt="pikachu flying in the clouds with balloons tied to it">
         </section>
     </main>
     <footer>
