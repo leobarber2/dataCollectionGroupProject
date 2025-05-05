@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Data Visualizations</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="../stylesheets/bar_graphA_stylesheet.css">
+</head>
+<body>
+    <!-- Hard-code navigation, header, and footer (bottom) onto every page -->
+    <header>
+        <div class="header-flex">
+            <img class="pokeball" src="../images/pokeball.png" alt="pokeball">
+            <h1>Pokémon Data Visualizations</h1>
+        </div>
+    </header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="bar_graphA.html" class="active">Bar Graph A</a>
+        <a href="bar_graphB.html">Bar Graph B</a>
+        <a href="heatmap.html">Heatmap</a>
+        <a href="scatterplot.html">Scatterplot</a>
+        <a href="about.html">About</a>
+    </nav>
+    <!-- Main page code in here -->
+    <main>
+    <section class= "Heading">
+        <!-- <p> Bar Chart A heading here!</p> -->
+    </section>
+    
+    <!-- Container for graphs-->
+    <div class="graph-wrapper">
+        <div class="graph-container">
+            <svg id="generationUsage2022" width="800" height="400"></svg>
+        </div>
+        <div class="graph-container">
+            <svg id="generationUsage2023" width="800" height="400"></svg>
+        </div>
+        <div class="graph-container">
+            <svg id="generationUsage2024" width="800" height="400"></svg>
+        </div>
+    </div>
+
+    <!-- Div for Tooltip -->
+    <div id="tooltip"></div>
+
+    <script>
+        //JavaScript code
+
+        // Create constants
+        // Margins
+        const margin = { top: 40, right: 30, bottom: 50, left: 60};
+        // Width
+        const width = 800 - margin.left - margin.right;
+        // Height
+        const height = 400 - margin.top - margin.bottom;
+
+        // Array for the years present in data.
+        const years = [
+                2022,
+                2023,
+                2024
+            ]
+
+        // Generation array (keeping order)
+        const generationOrder = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+        // Colors for generation (using same as first 9 typing colors from graph B)
+        const generationColors = {
+            I: "#91A119",
+            II: "#624D4E",
+            III: "#5060E1",
+            IV: "#FAC000",
+            V: "#EF70EF",
+            VI: "#FF8000",
+            VII: "#E62829",
+            VIII: "#81B9EF",
+            IX: "#704170"
+        }
+
+        // Load file
+        d3.csv("../data/pokemon_analysis_data.csv").then(data => {
+            years.forEach(year => {
+                initializeGraphs(year, data);
+            })
+        })
+
+        function initializeGraphs(year, data) {
+            const column = `Smogon_VGC_Usage_${year}`;
+            const svg = d3.select(`#generationUsage${year}`)
+                .append("g")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+            const filteredData = data.filter(d =>
+                d[column] !== "NA" && // removing data with "NA" for Smogon Usage
+                !d.name.includes("mega") && // balance data by removing mega evolutions
+                !d.name.includes("gmax") // balance data by removing gigantamax pokémon
+            );
+            
+            const cleanedData = filteredData.map(d => ({
+                generation: d.generation.replace("generation-", "").toUpperCase(),
+                usage: +d[column]
+            }));
+
+            const avgForGen = Array.from(
+                d3.rollup(
+                    cleanedData, // data
+                    v => d3.mean(v, d => d.usage), // mean usage per gen
+                    d => d.generation // data grouped by gen
+                ),
+                ([generation, average]) => ({generation, average}) // array of objects
+            ).filter(d => generationOrder.includes(d.generation)) // ensure's only generation in array used (in case of data issues)
+            .sort((a, b) => generationOrder.indexOf(a.generation) - generationOrder.indexOf(b.generation)); // sort data in ascending generation order
+
+            const xScale = d3.scaleBand()
+                .domain(generationOrder) // generation labels
+                .range([0, width]) // spacing gen labels
+                .padding(0.2); // pad bars
+
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(avgForGen, d => d.average)]) // start at 0, go to max usage
+                .nice() // rounding
+                .range([height, 0]); // top, bottom of chart
+
+            
+            const tooltip = d3.select("#tooltip"); // select tooltip class div
+
+            svg.selectAll("rect")
+                .data(avgForGen)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", d => xScale(d.generation))
+                .attr("y", d => yScale(d.average))
+                .attr("width", xScale.bandwidth())
+                .attr("height", d => height - yScale(d.average))
+                .attr("fill", d => generationColors[d.generation])
+                .on("mouseover", (event, d) => {
+                    // Highlight effect
+                    d3.select(event.currentTarget)
+                            .attr("stroke", "black") // outline hovered bar in black
+                            .attr("stroke-width", 2);
+
+                    // Using html to display aesthetically pleasing tooltip
+                    tooltip.style("display", "block")
+                        .html(`<strong>Generation: ${d.generation}</strong><br>
+                        Usage: ${(d.average * 100).toFixed(2)}%<br>`
+                        );
+                })
+                .on("mousemove", event => {
+                    tooltip.style("left", (event.pageX + 5) + "px")
+                        .style("top", (event.pageY - 28) + "px")
+                })
+                .on("mouseout", event => {
+                    d3.select(event.currentTarget)
+                        .attr("stroke", null); // Remove highlight effect
+
+                    // Remove tooltip display on mouseout
+                    tooltip.style("display", "none");
+                });
+
+            // x axis
+            svg.append("g")
+                .attr("transform", `translate(0, ${height})`)
+                .call(d3.axisBottom(xScale))
+            
+            // y axis
+            svg.append("g")
+                .call(d3.axisLeft(yScale)
+                    .ticks(6)
+                    .tickFormat(d3.format(".2%"))); // Percentage display
+
+            // label for x axis
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", height + 40)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .text("Pokémon Generation");
+
+            // label for y axis
+            svg.append("text")
+            .attr("transform", "rotate(-90)")
+                .attr("x", -height / 2)
+                .attr("y", -50)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .text("Average Smogon VGC Usage");
+
+            // label for individual bars
+            svg.selectAll(".label")
+                .data(avgForGen)
+                .enter()
+                .append("text")
+                .attr("class", "label")
+                .attr("x", d => xScale(d.generation) + xScale.bandwidth() / 2 - 24) // x location aligned with bars
+                .attr("y", d => yScale(d.average) - 5) // y location of text above the bar
+                .text(d => (d.average * 100).toFixed(2) + "%") // 2 decimal places with % sign
+
+            // title for graph
+            svg.append("text")
+                .attr("class", "title")
+                .attr("x", width / 2)
+                .attr("y", -10)
+                .style("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .text(`Average Smogon VGC Usage by Generation - ${year}`)
+
+        }
+    </script>
+
+    </main>
+    <footer>
+        <p>Visualizations and Website powered by <strong>d3.stroyers</strong> for our client <strong>Axis Addicts</strong>.<br>
+            All Pokémon related content are &copy; Nintendo, Game Freak, and the Pokémon Company.
+        </p>
+    </footer>
+</body>
+</html>

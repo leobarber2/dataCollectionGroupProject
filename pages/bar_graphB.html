@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Data Visualizations</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="../stylesheets/bar_graphB_stylesheet.css">
+</head>
+<body>
+    <!-- Hard-code navigation, header, and footer (bottom) onto every page -->
+    <header>
+        <div class="header-flex">
+            <img class="pokeball" src="../images/pokeball.png" alt="pokeball">
+            <h1>Pokémon Data Visualizations</h1>
+        </div>
+    </header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="bar_graphA.html">Bar Graph A</a>
+        <a href="bar_graphB.html" class="active">Bar Graph B</a>
+        <a href="heatmap.html">Heatmap</a>
+        <a href="scatterplot.html">Scatterplot</a>
+        <a href="about.html">About</a>
+    </nav>
+    <!-- Main page code in here -->
+    <main>
+        <section class= "Heading">
+            <!-- <p> Hi, main body of information for Bar Graph B here! </p> -->
+        </section>
+
+        <!-- Dropdown list for selecting which of the three graphs to display -->
+        <div class="dropdown-container">
+            <label for="graph-selector">Select which graph to display: </label>
+            <select id="graph-selector">
+                <option value="top10">Top 10 Pokémon</option>
+                <option value="top30">Top 30 Pokémon</option>
+                <option value="allAbove11">All Pokemon with Usage &gt; 11%</option>
+            </select>
+        </div>
+
+        <!-- Container for graphs for legends -->
+        <div class="graph-wrapper">
+            <!-- Graphs -->
+            <div class="chart-container">
+                <svg id="pokemonUsage2022" width="800" height="400"></svg>
+                <svg id="pokemonUsage2023" width="800" height="400"></svg>
+                <svg id="pokemonUsage2024" width="800" height="400"></svg>
+            </div>
+            <!-- Legend -->
+            <div class="legend-container">
+                <div class="legend-title">Type 1 Key</div>
+                <div class="legend" id="type-key"></div>
+            </div>
+        </div>
+
+        <!-- Div for tooltip -->
+        <div id="tooltip"></div>
+
+        <script>
+            // JavaScript code
+
+            // Create constants
+            // Margins
+            const margin = { top: 40, right: 30, bottom: 100, left: 70};
+            // Width
+            const width = 800 - margin.left - margin.right;
+            // Height
+            const height = 400 - margin.top - margin.bottom;
+            // Colors for Types (using Type 1)
+            // Hex colors from Video game types chart on: 
+            // https://bulbapedia.bulbagarden.net/wiki/Help:Color_templates#Video_game_types
+            const typeColors = {
+                bug: "#91A119",
+                dark: "#624D4E",
+                dragon: "#5060E1",
+                electric: "#FAC000",
+                fairy: "#EF70EF",
+                fighting: "#FF8000",
+                fire: "#E62829",
+                flying: "#81B9EF",
+                ghost: "#704170",
+                grass: "#3FA129",
+                ground: "#915121",
+                ice: "#3DCEF3",
+                normal: "#9FA19F",
+                poison: "#9141CB",
+                psychic: "#EF4179",
+                rock: "#AFA981",
+                steel: "#60A1B8",
+                water: "#2980EF"
+            }
+            // Sorted list of all types in typeColors array.
+            const allTypes = Object.keys(typeColors).sort();
+
+            // Array for the years present in data.
+            const years = [
+                2022,
+                2023,
+                2024
+            ]
+
+            //Load file (use pokemon_analysis_data.csv)
+            d3.csv("../data/pokemon_analysis_data.csv").then(data => {
+                initializeLegend(); // Initialize graphs
+                initializeGraphs(data, "top10"); // Initialize graphs. Default is top 10 chart
+
+                // Use class identifier to change graph when user makes a selection
+                d3.select("#graph-selector").on("change", function () {
+                    const selectedGraph = d3.select(this).property("value"); // Grab selected property/option
+                    initializeGraphs(data, selectedGraph); // Re-initialize with the selected option
+                })
+            })
+
+            function initializeGraphs(data, selectedGraph) {
+                // Remove graph if there is already one displayed
+                d3.selectAll("svg").selectAll("*").remove();
+
+                years.forEach(year => {
+                    const column = `Smogon_VGC_Usage_${year}`;
+                    const cleanedData = cleanData(data, column, selectedGraph);
+                    initializeSelectedGraph(year, cleanedData);
+                })
+            }
+
+            // Need to clean data to remove useless values and outliers.
+            function cleanData(data, column, selectedGraph) {
+                let cleanedData = data.filter(d =>
+                    d[column] !== "NA" && // removing data with "NA" for Smogon Usage
+                    !d.name.includes("mega") && // balance data by removing mega evolutions
+                    !d.name.includes("gmax") // balance data by removing gigantamax pokémon
+                ).map(d => ({
+                    name: d.name, // Pokémon name
+                    usage: +d[column], // String to number conversion,
+                    generation: d.generation.replace("generation-", "").toUpperCase(),
+                    type1: d.type1,
+                    type2: d.type2 === "No_type" ? "None" : d.type2 // Change type2 "No_type" to none, or use type2 element if the pokémon has one
+                }));
+
+                // Manipulate data depending on the graph selected by user
+                if (selectedGraph === "top10") {
+                    // Sort from lowest usage to highest usage. Only use the last 10 items (top 10 pokémon)
+                    cleanedData = cleanedData.sort((a, b) => a.usage - b.usage).slice(-10);
+                } else if (selectedGraph === "top30") {
+                    // Sort from lowest usage to highest usage. Only use the last 30 items (top 30 pokémon)
+                    cleanedData = cleanedData.sort((a, b) => a.usage - b.usage).slice(-30);
+                } else if (selectedGraph === "allAbove11") {
+                    // Filter data to only include Pokémon with usage over 11%. Sort from lowest usage to highest usage.
+                    cleanedData = cleanedData.filter(d => d.usage > 0.11).sort((a, b) => a.usage - b.usage);
+                }
+
+                return cleanedData;
+            }
+
+            // Draws the selected bar chart
+            function initializeSelectedGraph(year, cleanedData) {
+                const svg = d3.select(`#pokemonUsage${year}`)
+                    .append('g')
+                    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+                const xScale = d3.scaleBand() // discrete values
+                    .domain(cleanedData.map(d => d.name)) // pokémon names
+                    .range([0, width]) // spacing pokémon names
+                    .padding(0.2); // pad bars
+
+                const yScale = d3.scaleLinear()
+                    .domain([0, d3.max(cleanedData, d => d.usage)]) // start at 0, go to max usage
+                    .nice () // rounding
+                    .range([height, 0]) // top, bottom of chart
+
+                const tooltip = d3.select("#tooltip"); // select tooltip class div
+
+                // Create the actual bars
+                svg.selectAll("rect")
+                    .data(cleanedData)
+                    .enter()
+                    .append("rect")
+                    .attr("x", d => xScale(d.name))
+                    .attr("y", d => yScale(d.usage))
+                    .attr("width", xScale.bandwidth())
+                    .attr("height", d => height - yScale(d.usage))
+                    .attr("fill", d => typeColors[d.type1.toLowerCase()] || "#888") // in-case type doesn't show up, using #888 hex color
+                    .on("moveover", (event, d) => {
+                        // Highlight effect
+                        d3.select(event.currentTarget)
+                            .attr("stroke", "black") // outline hovered bar in black
+                            .attr("stroke-width", 2);
+
+                        // Using html to display aesthetically pleasing tooltip
+                        tooltip.style("display", "block")
+                            .html(`<strong>${d.name}</strong><br>
+                                    Usage: ${(d.usage * 100).toFixed(2)}%<br>
+                                    Generation: ${d.generation}<br>
+                                    Type 1: ${d.type1}<br>
+                                    Type 2: ${d.typ2}<br>`
+                            );
+                    })
+                    .on("mousemove", event => {
+                        // Tooltip will move with the user's mouse!
+                        tooltip.style("left", (event.pageX + 10 + "px"))
+                            .style("top", (event.pageY - 40) + "px");
+                    })
+                    .on("mouseout", event => {
+                        d3.select(event.currentTarget)
+                            .attr("stroke", null); // Remove highlight effect
+                        
+                        // Remove tooltip display on mouseout
+                        tooltip.style("display", "none");
+                    });
+                
+                // x axis
+                svg.append("g")
+                    .attr("transform", `translate(0, ${height})`)
+                    .call(d3.axisBottom(xScale))
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("transform", "rotate(-45)")
+                    .attr("dx", "-0.8em")
+                    .attr("dy", "0.15em");
+
+                // y axis
+                svg.append("g")
+                    .call(d3.axisLeft(yScale)
+                        .ticks(6)
+                        .tickFormat(d3.format(".2%"))); // Percentage display
+
+                // label for x axis
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height + 70)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .text("Pokémon");
+
+                // label for y axis
+                svg.append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("x", -height / 2)
+                    .attr("y", -50)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .text("Smogon VGC Usage");
+
+                // title for graph
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", -10)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .text(`Highest Smogon VGC Usage Pokemon - ${year}`)
+            }
+
+            // Function to display legend
+            function initializeLegend() {
+                const legendContainer = d3.select("#type-key"); // select container for key
+
+                allTypes.forEach(type => {
+                    const legendItem = legendContainer.append("div")
+                        .attr("class", "legend-box"); // for styling
+
+                    legendItem.append("div")
+                        .attr("class", "legend-color") // for styling
+                        .style("background-color", typeColors[type]); // cole based on typeColors array
+
+                    legendItem.append("span")
+                        .text(type.charAt(0).toUpperCase() + type.slice(1)) // Capitalize just first letter
+                })
+            }
+        </script>
+
+        
+
+
+
+
+
+
+    </main>
+    <footer>
+        <p>Visualizations and Website powered by <strong>d3.stroyers</strong> for our client <strong>Axis Addicts</strong>.<br>
+            All Pokémon related content are &copy; Nintendo, Game Freak, and the Pokémon Company.
+        </p>
+    </footer>
+</body>
+</html>

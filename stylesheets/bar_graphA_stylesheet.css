@@ -1,0 +1,95 @@
+html, body {
+    font-family: 'Courier New', 'Courier', 'monospace';
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+header {
+    /* background-color: #ff0000; */
+    background-color: #F62D14;
+    color: black;
+    /* padding: 0.001em; */
+    padding: 0.5em 0;
+    text-align: center;
+}
+
+.header-flex {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+}
+
+.pokeball {
+    width: 40px;
+    height: 40px;
+}
+nav {
+    background-color: black;
+    padding: 1em;
+    text-align: center;
+}
+nav a {
+    /* color: #333; */
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 0 5px;
+}
+nav a:hover {
+    text-decoration: underline;
+}
+
+nav a.active {
+    text-decoration: underline;
+    font-style: italic;
+}
+
+footer {
+    background-color: #F62D14;
+    color: black;
+    text-align: center;
+    padding: 0.001em;
+    margin-top: 10px;
+
+}
+
+/* Above stylings should be on every stylesheet. */
+
+/* Stlyings below are specific to index */
+
+.graph-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 20px;
+    gap: 20px;
+}
+
+.graph-container {
+    display: block;
+    width: 800px;
+    padding-right: 20px;
+}
+/* Same as graph B */
+#tooltip {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 14px;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    max-width: 250px;
+    word-wrap: break-word;
+}

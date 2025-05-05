@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Data Visualizations</title>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <link rel="stylesheet" href="../stylesheets/scatterplot_stylesheet.css">
+</head>
+<body>
+    <!-- Hard-code navigation, header, and footer (bottom) onto every page -->
+    <header>
+        <div class="header-flex">
+            <img class="pokeball" src="../images/pokeball.png" alt="pokeball">
+            <h1>Pokémon Data Visualizations</h1>
+        </div>
+    </header>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="bar_graphA.html">Bar Graph A</a>
+        <a href="bar_graphB.html">Bar Graph B</a>
+        <a href="heatmap.html">Heatmap</a>
+        <a href="scatterplot.html" class="active">Scatterplot</a>
+        <a href="about.html">About</a>
+    </nav>
+    <!-- Main page code in here -->
+    <main>
+        <section class= "Heading">
+            <p> Hi, main body of information here! </p>
+        </section>
+        <div id="tooltip"></div>
+        <div id="scatterplot-container"></div>
+
+        <select id="y-axis-select">
+            <option value="attack">Attack</option>
+            <option value="sp_atk">Sp_Atk</option>
+            <option value="defense">Defense</option>
+            <option value="sp_def">Sp_Def</option>
+            <option value="speed">Speed</option>
+        </select>
+
+        <script>
+           d3.csv("../data/pokemon_analysis_data.csv").then(data => {
+    const width = 1000, height = 1000, margin = { top: 50, right: 50, bottom: 50, left: 50 };
+
+    const svg = d3.select("#scatterplot-container").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    const xScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => +d.hp)]) // hp stat
+        .range([margin.left, width - margin.right]);
+    let yScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => +d.attack)]) // default y-axis stat is attack
+        .range([height - margin.bottom, margin.top]);
+
+
+    // Append X and Y axes
+    const xAxis = d3.axisBottom(xScale).ticks(15); // Adjust tick count as needed
+    const yAxis = d3.axisLeft(yScale).ticks(15);
+
+    svg.append("g")
+        .attr("transform", `translate(0, ${height - margin.bottom})`)
+        .call(xAxis);
+    svg.append("g")
+        .attr("transform", `translate(${margin.left}, 0)`)
+        .call(yAxis);
+
+
+    // Append axis labels
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height - 10)
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .text("HP");
+
+    const yAxisLabel = svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", 15)
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .text("Attack");
+
+
+    // Make the circles
+    const circles = svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(+d.hp))
+        .attr("cy", d => yScale(+d.attack))
+        .attr("r", 5)
+        .attr("fill", "blue");
+
+
+    // This would be the section for the hover action
+    const tooltip = d3.select("#tooltip");
+    circles.on("mouseover", function(event, d) {
+        tooltip.style("display", "block")
+            .style("left", event.pageX + 10 + "px")
+            .style("top", event.pageY + 10 + "px")
+            .html(`
+                <strong>${d.name}</strong><br>
+                HP: ${d.hp}<br>
+                Attack: ${d.attack}<br>
+                Sp_Attack: ${d.sp_atk}<br>
+                Defense: ${d.defense}<br>
+                Sp_Defense: ${d.sp_def}<br>
+                Speed: ${d.speed}
+            `);
+        d3.select(this).attr("stroke", "black").attr("stroke-width", 2); //Highlight circle
+    })
+    .on("mouseout", function() {
+        tooltip.style("display", "none");
+        d3.select(this).attr("stroke", "none"); //Remove highlight
+    }); 
+
+    
+    // This section is for when the circles are updated, along with the y-axis label
+    d3.select("#y-axis-select").on("change", function() {
+        const selectedStat = this.value;
+        yScale.domain([0, d3.max(data, d => +d[selectedStat])]);
+
+        circles.transition()
+            .duration(500)
+            .attr("cy", d => yScale(+d[selectedStat]))
+            .attr("fill", d => {
+            // Change the color based on stat type
+            if (selectedStat === "attack") return "blue";
+            if (selectedStat === "defense") return "green";
+            if (selectedStat === "speed") return "purple";
+            if (selectedStat === "sp_def") return "red";
+            if (selectedStat === "sp_atk") return "orange";
+        });
+
+        yAxisLabel.text(selectedStat.charAt(0).toUpperCase() + selectedStat.slice(1));
+    });
+});
+        </script>
+    </main>
+    <footer>
+        <p>Visualizations and Website powered by <strong>d3.stroyers</strong> for our client <strong>Axis Addicts</strong>.<br>
+            All Pokémon related content are &copy; Nintendo, Game Freak, and the Pokémon Company.
+        </p>
+    </footer>
+</body>
+</html>

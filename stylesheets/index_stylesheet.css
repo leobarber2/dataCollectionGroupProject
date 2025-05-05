@@ -1,0 +1,98 @@
+html, body {
+    font-family: 'Courier New', 'Courier', 'monospace';
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+header {
+    /* background-color: #ff0000; */
+    background-color: #F62D14;
+    color: black;
+    /* padding: 0.001em; */
+    padding: 0.5em 0;
+    text-align: center;
+}
+
+.header-flex {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+}
+
+.pokeball {
+    width: 40px;
+    height: 40px;
+}
+nav {
+    background-color: black;
+    padding: 1em;
+    text-align: center;
+}
+nav a {
+    /* color: #333; */
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    margin: 0 5px;
+}
+nav a:hover {
+    text-decoration: underline;
+}
+
+nav a.active {
+    text-decoration: underline;
+    font-style: italic;
+}
+
+footer {
+    background-color: #F62D14;
+    color: black;
+    text-align: center;
+    padding: 0.001em;
+    margin-top: 10px;
+
+}
+
+/* Above stylings should be on every stylesheet. */
+
+/* Stlyings below are specific to index */
+
+.Heading {
+    text-align: center;
+}
+
+.Heading ul {
+    display: inline-block;
+    text-align: left;
+    padding-left: 1.0em;
+    margin: 0 auto;
+}
+
+.Middle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.Middle img {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.LearnMore {
+    text-align: center;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0px;
+}
