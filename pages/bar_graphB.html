@@ -180,7 +180,7 @@
                     .attr("width", xScale.bandwidth())
                     .attr("height", d => height - yScale(d.usage))
                     .attr("fill", d => typeColors[d.type1.toLowerCase()] || "#888") // in-case type doesn't show up, using #888 hex color
-                    .on("mouseeover", (event, d) => {
+                    .on("mouseover", (event, d) => {
                         // Highlight effect
                         d3.select(event.currentTarget)
                             .attr("stroke", "black") // outline hovered bar in black
